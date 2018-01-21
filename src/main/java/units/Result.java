@@ -12,4 +12,12 @@ public final class Result {
         this.unitName = unitName;
         this.multiplicationFactor = multiplicationFactor;
     }
+
+    public String getUnitName() {
+        return unitName;
+    }
+
+    public double getMultiplicationFactor() {
+        return multiplicationFactor;
+    }
 }
