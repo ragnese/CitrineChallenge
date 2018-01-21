@@ -3,8 +3,8 @@ package units;
 public enum Operator {
     MULTIPLY,
     DIVIDE,
-    PAREN;
-    // No right paren because they never get put on the stack
+    LEFT_PAREN,
+    RIGHT_PAREN;
 
     public static Operator fromChar(final char c) throws ConversionException {
         switch (c) {
@@ -13,9 +13,23 @@ public enum Operator {
             case ('/'):
                 return DIVIDE;
             case ('('):
-                return PAREN;
+                return LEFT_PAREN;
+            case (')'):
+                return RIGHT_PAREN;
             default:
                 throw new ConversionException();
+        }
+    }
+
+    public static boolean isOperator(final char c) {
+        switch (c) {
+            case('*'):
+            case('/'):
+            case('('):
+            case(')'):
+                return true;
+            default:
+                return false;
         }
     }
 }

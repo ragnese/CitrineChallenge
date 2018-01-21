@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
 
-import static units.Operator.PAREN;
+import static units.Operator.LEFT_PAREN;
 
 public final class Converter {
     private static final Map<String, UnitConversion> map;
@@ -50,28 +50,39 @@ public final class Converter {
     }
 
     public static Result ConvertToSI(final String expression) throws ConversionException {
+        final PostfixStackAndUnitString intermediate = parseExpression(expression);
+
+        final double conversionFactor = evaluatePostfixStack(intermediate.stack);
+
+        final BigDecimal bd = new BigDecimal(conversionFactor).setScale(14, RoundingMode.UP);
+        final double resultConversionFactor = bd.doubleValue();
+
+        return new Result(intermediate.units, resultConversionFactor);
+    }
+
+    private static PostfixStackAndUnitString parseExpression(final String expression) throws ConversionException {
+        // See: Dijkstra's shunting-yard algorithm
+
         // Object = Double | Operator
-        final Deque<Object> output = new ArrayDeque<>();
+        final Deque<Object> postfixStack = new ArrayDeque<>();
         final Deque<Operator> operators = new ArrayDeque<>();
 
-        final StringBuilder resultUnitName = new StringBuilder();
+        final StringBuilder unitsBuilder = new StringBuilder();
 
-        final StringBuilder buffer = new StringBuilder();
+        final StringBuilder tokenBuffer = new StringBuilder();
         for (int i = 0; i < expression.length(); ++i) {
             switch (expression.charAt(i)) {
                 case '(':
-                    popFromBuilderToStack(output, resultUnitName, buffer);
-                    resultUnitName.append(expression.charAt(i));
-                    operators.push(PAREN);
+                    unitsBuilder.append(expression.charAt(i));
+                    operators.push(LEFT_PAREN);
                     break;
                 case ')':
-                    popFromBuilderToStack(output, resultUnitName, buffer);
-                    resultUnitName.append(expression.charAt(i));
-                    while (operators.size() > 0 && operators.peek() != PAREN) {
-                        output.push(operators.pop());
+                    unitsBuilder.append(expression.charAt(i));
+                    while (operators.size() > 0 && operators.peek() != LEFT_PAREN) {
+                        postfixStack.push(operators.pop());
                     }
 
-                    if (operators.peek() != PAREN) {
+                    if (operators.peek() != LEFT_PAREN) {
                         throw new ConversionException();
                     } else {
                         operators.pop();
@@ -80,44 +91,63 @@ public final class Converter {
                     break;
                 case '*':
                 case '/':
-                    popFromBuilderToStack(output, resultUnitName, buffer);
-                    resultUnitName.append(expression.charAt(i));
-                    while (operators.size() > 0 && operators.peek() != PAREN) {
-                        output.push(operators.pop());
+                    unitsBuilder.append(expression.charAt(i));
+                    while (operators.size() > 0 && operators.peek() != LEFT_PAREN) {
+                        postfixStack.push(operators.pop());
                     }
                     operators.push(Operator.fromChar(expression.charAt(i)));
                     break;
                 default:
-                    buffer.append(expression.charAt(i));
-                    if (i == expression.length() - 1) {
-                        popFromBuilderToStack(output, resultUnitName, buffer);
+                    tokenBuffer.append(expression.charAt(i));
+                    // If we've reached end of expression or the next char is an operator, push token to postfixStack,
+                    // add SI unit to the unitsBuilder, and clear tokenBuffer for next token
+                    if (i == expression.length() - 1 || Operator.isOperator(expression.charAt(i + 1))) {
+                        final UnitConversion conversion = map.get(tokenBuffer.toString());
+                        if (conversion == null) {
+                            throw new ConversionException();
+                        }
+
+                        unitsBuilder.append(conversion.getNewSymbol());
+
+                        postfixStack.add(conversion.getConversionFactor());
+
+                        tokenBuffer.delete(0, tokenBuffer.length());
                     }
             }
         }
 
         while (operators.size() > 0) {
-            output.push(operators.pop());
+            postfixStack.push(operators.pop());
         }
 
-        // End of shunting yard algo
+        return new PostfixStackAndUnitString(postfixStack, unitsBuilder.toString());
+    }
 
-        final Deque<Double> resultStack = new ArrayDeque<>();
-        final Iterator<Object> iterator = output.descendingIterator();
+    private static double evaluatePostfixStack(final Deque<Object> stack) throws ConversionException {
+        final Deque<Double> result = new ArrayDeque<>();
+
+        final Iterator<Object> iterator = stack.descendingIterator();
         while (iterator.hasNext()) {
             final Object token = iterator.next();
             if (token instanceof Double) {
-                resultStack.push((Double) token);
+                result.push((Double) token);
             } else {
-                // TODO error handling
-                final Double op1 = resultStack.pop();
-                final Double op2 = resultStack.pop();
+                final Double op1;
+                final Double op2;
+                try {
+                    op1 = result.pop();
+                    op2 = result.pop();
+                } catch (final NoSuchElementException e) {
+                    throw new ConversionException();
+                }
+
 
                 switch ((Operator) token) {
                     case MULTIPLY:
-                        resultStack.push(op1 * op2);
+                        result.push(op1 * op2);
                         break;
                     case DIVIDE:
-                        resultStack.push(op1 / op2);
+                        result.push(op1 / op2);
                         break;
                     default:
                         throw new ConversionException();
@@ -125,26 +155,16 @@ public final class Converter {
             }
         }
 
-        final BigDecimal bd = new BigDecimal(resultStack.pop()).setScale(14, RoundingMode.UP);
-        final double resultConversionFactor = bd.doubleValue();
-
-        return new Result(resultUnitName.toString(), resultConversionFactor);
+        return result.pop();
     }
 
-    private static void popFromBuilderToStack(final Deque<Object> stack, final StringBuilder outputString, final StringBuilder builder)
-            throws ConversionException {
-        if (builder.length() == 0) {
-            return;
+    private static class PostfixStackAndUnitString {
+        Deque<Object> stack;
+        String units;
+
+        PostfixStackAndUnitString(final Deque<Object> stack, final String units) {
+            this.stack = stack;
+            this.units = units;
         }
-
-        final UnitConversion conversion = map.get(builder.toString());
-        if (conversion == null) {
-            throw new ConversionException();
-        }
-
-        outputString.append(conversion.getNewSymbol());
-
-        stack.add(conversion.getConversionFactor());
-        builder.delete(0, builder.length());
     }
 }
