@@ -1,5 +1,3 @@
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import spark.Request;
 import spark.Response;
 import units.ConversionException;
@@ -9,8 +7,6 @@ import static spark.Spark.*;
 import static units.Converter.ConvertToSI;
 
 public final class Main {
-    private static final ObjectMapper mapper = new ObjectMapper();
-
     public static void main(String[] args) {
         get("/units/si", Main::handler);
     }
@@ -30,14 +26,7 @@ public final class Main {
             return e.getMessage();
         }
 
-        try {
-            final byte[] body = mapper.writeValueAsBytes(result);
-
-            res.status(200);
-            return body;
-        } catch (final JsonProcessingException e) {
-            res.status(500);
-            return "Error creating result of computation";
-        }
+        res.status(200);
+        return result.toJson();
     }
 }

@@ -97,7 +97,7 @@ public final class UnitsHandlerTest {
             fail();
             return;
         }
-        assertEquals(0.00029088820867, result.getMultiplicationFactor(), 1e-15);
+        assertEquals(0.00029088820867, result.getMultiplicationFactor(), 1e-11);
         assertEquals("rad/s", result.getUnitName());
     }
 }

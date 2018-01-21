@@ -1,7 +1,5 @@
 package units;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.*;
 
 import static units.Operator.LEFT_PAREN;
@@ -54,10 +52,7 @@ public final class Converter {
 
         final double conversionFactor = evaluatePostfixStack(intermediate.stack);
 
-        final BigDecimal bd = new BigDecimal(conversionFactor).setScale(14, RoundingMode.UP);
-        final double resultConversionFactor = bd.doubleValue();
-
-        return new Result(intermediate.units, resultConversionFactor);
+        return new Result(intermediate.units, conversionFactor);
     }
 
     private static PostfixStackAndUnitString parseExpression(final String expression) throws ConversionException {
