@@ -23,9 +23,10 @@ public final class Main {
             result = ConvertToSI(query);
         } catch (final ConversionException e) {
             res.status(400);
-            return e.getMessage();
+            return "Invalid query string";
         }
 
+        res.header("Content-Type", "application/json");
         res.status(200);
         return result.toJson();
     }
