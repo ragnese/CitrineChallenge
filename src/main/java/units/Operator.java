@@ -1,12 +1,12 @@
 package units;
 
-public enum Operator {
+enum Operator {
     MULTIPLY,
     DIVIDE,
     LEFT_PAREN,
     RIGHT_PAREN;
 
-    public static Operator fromChar(final char c) throws ConversionException {
+    static Operator fromChar(final char c) throws ConversionException {
         switch (c) {
             case ('*'):
                 return MULTIPLY;
@@ -21,7 +21,7 @@ public enum Operator {
         }
     }
 
-    public static boolean isOperator(final char c) {
+    static boolean isOperator(final char c) {
         switch (c) {
             case('*'):
             case('/'):
