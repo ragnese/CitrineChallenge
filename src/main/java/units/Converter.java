@@ -53,7 +53,7 @@ public final class Converter {
         map.put("\"", secondToRad);
 
         map.put("hectare", hecToM2);
-        map.put("a", hecToM2);
+        map.put("ha", hecToM2);
 
         map.put("litre", litreToM3);
         map.put("L", litreToM3);
@@ -119,7 +119,7 @@ public final class Converter {
 
                         unitsBuilder.append(conversion.getNewSymbol());
 
-                        postfixStack.add(conversion.getConversionFactor());
+                        postfixStack.push(conversion.getConversionFactor());
 
                         tokenBuffer.delete(0, tokenBuffer.length());
                     }
@@ -145,8 +145,8 @@ public final class Converter {
                 final Double op1;
                 final Double op2;
                 try {
-                    op1 = result.pop();
                     op2 = result.pop();
+                    op1 = result.pop();
                 } catch (final NoSuchElementException e) {
                     throw new ConversionException();
                 }
