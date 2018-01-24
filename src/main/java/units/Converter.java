@@ -9,6 +9,10 @@ public final class Converter {
     static {
         map = new HashMap<>(); // Number of unit conversions implemented = 16, which happens to be the default capacity!
 
+        final UnitConversion secToSec = new UnitConversion("s", 1);
+        final UnitConversion radToRad = new UnitConversion("rad", 1);
+        final UnitConversion meterToMeter = new UnitConversion("m", 1);
+        final UnitConversion kgToKg = new UnitConversion("kg", 1);
         final UnitConversion minToSec = new UnitConversion("s", 60);
         final UnitConversion hourToSec = new UnitConversion("s", 3600);
         final UnitConversion dayToSec = new UnitConversion("s", 84600);
@@ -18,6 +22,17 @@ public final class Converter {
         final UnitConversion hecToM2 = new UnitConversion("m*m", 10000);
         final UnitConversion litreToM3 = new UnitConversion("m*m*m", 0.001);
         final UnitConversion tonToM3 = new UnitConversion("kg", 1000);
+
+        map.put("second", secToSec);
+        map.put("s", secToSec);
+
+        map.put("rad", radToRad);
+
+        map.put("m", meterToMeter);
+        map.put("meter", meterToMeter);
+
+        map.put("kilogram", kgToKg);
+        map.put("kg", kgToKg);
 
         map.put("minute", minToSec);
         map.put("min", minToSec);
